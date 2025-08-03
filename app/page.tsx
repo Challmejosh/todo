@@ -1,103 +1,201 @@
-import Image from "next/image";
+"use client"
+import { addTodo, assignTodos, completeEdit, deleteTodo, titleEdit,  } from "@/libs/redux/slice/todoSlice";
+import { RootState } from "@/libs/redux/store";
+import { Todo } from "@/utils/types";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useState, FormEvent, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const allTodos = useSelector((state:RootState)=>state.todos.todo)
+  const dispatch = useDispatch()
+  const [newTodo, setNewTodo] = useState("");
+  const [id,setId] = useState<number|undefined|string>(undefined)
+  const [edit,setEdit] = useState<string>("")
+  // const [editBool,setEditBool] = useState<boolean>(false)
+  const [currentPage,setCurrentPage] = useState<number>(1)
+    const handleAddTodo = async (e:FormEvent) => {
+      e.preventDefault()
+      const new_todo:Todo ={
+        title:newTodo,
+        id: uuidv4(),
+        completed: false,
+      }
+      await dispatch(addTodo(new_todo))
+      setNewTodo("")
+    }
+    const handleUpdate = async (id:number|string,text?:string)=>{
+        const find = allTodos?.find(item=>item.id===id?{...item,title: text}:item)
+        if(!find) return
+        await dispatch(titleEdit(find))
+        setId(undefined)
+        return
+      }
+    const changeStatus = async (id:string|number)=>{
+      const find = allTodos.map(item=>item.id===id?{...item,completed:!item.completed}:item)
+      if(find)return
+      await dispatch(completeEdit(find))
+    }
+    const itemsPerPage = 10
+    const totalPages = Math.ceil(allTodos?.length / itemsPerPage)
+    const paginated = allTodos?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    const handlePagination = (op: "minus" | "plus") => {
+      setCurrentPage(prev => {
+        if (op === "plus") return Math.min(prev + 1, totalPages)
+        if (op === "minus") return Math.max(prev - 1, 1)
+        return prev
+      })
+    }
+
+  return (
+      <div className="p-3 flex flex-col gap-5 items-center justify-center ">
+        <div className="max-w-md mx-auto w-full sm:w-[800px] mt-10 p-4 border rounded shadow">
+          <h1 className="text-2xl font-bold mb-4">Todo List</h1>
+          <form onSubmit={handleAddTodo} className="flex mb-4">
+            <input
+              type="text"
+              value={newTodo}
+              onChange={(e) => setNewTodo(e.target.value)}
+              placeholder="Add new todo"
+              className="flex-grow border border-gray-300 rounded px-3 py-2 mr-2"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Add
+            </button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+        <div className="overflow-auto [&::-webkit-scrollbar]:hidden scrollbar h-[400px] w-full sm:w-[600px] border rounded-lg ">
+          <table className="min-w-full text-left border-collapse bg-white shadow-sm rounded-lg">
+            <thead className="bg-blue-100 text-gray-700 text-sm">
+              <tr>
+                <th className="px-4 py-3">Todo</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Edit</th>
+                <th className="px-4 py-3">toggle</th>
+                <th className="px-4 py-3">view</th>
+                <th className="px-4 py-3">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allTodos?.length===0?(
+                <tr className="">
+                  <td colSpan={6} className=" ">
+                    <p className="w-full flex items-center justify-center ">
+                      todo is empty
+                    </p>
+                  </td>
+                </tr>
+              ):(
+                <>
+                  {paginated?.map((todo) => (
+                    <tr key={todo.id} className="border-b hover:bg-blue-50 transition">
+                      {id !== todo.id ? (
+                        <>
+                          <td className="px-4 py-3 text-sm">{todo.title}</td>
+
+                          {/* ✅ Status Toggle */}
+                          <td
+                            className={`px-4 py-3 text-sm font-medium cursor-pointer`}
+                          >
+                            {todo.completed ? "Completed ✅" : "Pending ⏳"}
+                          </td>
+
+                          <td
+                            onClick={() => {
+                              setEdit(todo.title);
+                              setId(todo.id);
+                            }}
+                            className="px-4 py-3 text-blue-500 cursor-pointer hover:underline"
+                          >
+                            Edit
+                          </td>
+
+                          <td
+                            onClick={() => changeStatus(todo.id)}
+                            className={`px-4 py-3 cursor-pointer hover:underline
+                            ${todo.completed?"text-yellow-200":
+                            "text-green-200"
+                            }  
+                            `}
+                          >
+                            {todo?.completed?"Mark as Pending":"Mark as Completed"}
+                          </td>
+                          <td
+                            className="px-4 py-3  cursor-pointer hover:underline"
+                          >
+                            <Link href={`/todo/${todo.id}`} className="bg-green-50 w-fit p-2 rounded-md">
+                              view
+                            </Link>
+                          
+                          </td>
+                          <td
+                            onClick={() => dispatch(deleteTodo(todo))}
+                            className="px-4 py-3 text-red-500 cursor-pointer hover:underline"
+                          >
+                            <Trash2 />
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td colSpan={4} className="px-4 py-3">
+                            <div className="flex flex-col sm:flex-row gap-2 items-center">
+                              <input
+                                onChange={(e) => setEdit(e.target.value)}
+                                type="text"
+                                className="w-full sm:w-auto flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                placeholder={todo.title}
+                                value={edit}
+                              />
+                              <button
+                                onClick={() => handleUpdate(todo.id, edit)}
+                                className="text-white bg-blue-500 hover:bg-blue-600 text-sm px-4 py-2 rounded-md transition"
+                              >
+                                Confirm
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </>
+              )}
+            </tbody>
+            <tfoot className=" text-sm">
+              <tr>
+                <td colSpan={6} className="px-4 py-3">
+                  <div className="flex justify-center items-center gap-6">
+                    <button 
+                    disabled={currentPage===1}
+                    onClick={()=>handlePagination("minus")}
+                    className="text-blue-500 hover:underline">
+                    <ChevronLeft />
+                    </button>
+                    <p className="">
+                      {currentPage} / {totalPages}
+                    </p>
+                    <button
+                    onClick={()=>handlePagination("plus")}
+                    className="text-blue-500 hover:underline">
+                      <ChevronRight />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+
+      </div>
+    );
 }
