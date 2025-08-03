@@ -27,16 +27,24 @@ export default function Home() {
       setNewTodo("")
     }
     const handleUpdate = async (id:number|string,text?:string)=>{
-        const find = allTodos?.find(item=>item.id===id?{...item,title: text}:item)
+        const find = allTodos?.find(item=>item.id===id)
         if(!find) return
-        await dispatch(titleEdit(find))
+        const newTodo:Todo = {
+          ...find,
+          title: edit
+        } 
+        await dispatch(titleEdit(newTodo))
         setId(undefined)
-        return
-      }
-    const changeStatus = async (id:string|number)=>{
-      const find = allTodos.map(item=>item.id===id?{...item,completed:!item.completed}:item)
-      if(find)return
-      await dispatch(completeEdit(find))
+    }
+    const changeStatus = async (id:number|string,completed: boolean)=>{
+        const find = allTodos?.find(item=>item.id===id)
+        if(!find) return
+        const newTodo:Todo={
+          ...find,
+          completed: completed
+        }
+        await dispatch(completeEdit(newTodo))
+        setId(undefined)
     }
     const itemsPerPage = 10
     const totalPages = Math.ceil(allTodos?.length / itemsPerPage)
@@ -120,7 +128,7 @@ export default function Home() {
                           </td>
 
                           <td
-                            onClick={() => changeStatus(todo.id)}
+                            onClick={() => changeStatus(todo.id,!todo.completed)}
                             className={`px-4 py-3 cursor-pointer hover:underline
                             ${todo.completed?"text-yellow-200":
                             "text-green-200"
