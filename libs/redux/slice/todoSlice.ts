@@ -25,15 +25,15 @@ const todoSlice = createSlice({
         },
         titleEdit: (state,action:PayloadAction<Todo>)=>{
             const local = localStorage.getItem("local-todo")
+            const todo = action.payload
             if(local){
                 const parsed:Todo[] = JSON.parse(local)
-                const update = parsed.map(item=>item.id===action.payload.id?{
+                const update = parsed.map(item=>item.id===todo.id?{
                 ...item,title: todo.title,
                  }:item)
                 localStorage.setItem("local-todo",JSON.stringify(update))
             }
-            const todo = action.payload
-            state.todo.map(item=>item.id===todo.id?{
+            state.todo = state.todo.map(item=>item.id===todo.id?{
                 ...item,title: todo.title,
             }:item)
         },
@@ -47,7 +47,7 @@ const todoSlice = createSlice({
                  }:item)
                 localStorage.setItem("local-todo",JSON.stringify(update))
             }
-            state.todo.map(item=>item.id===todo.id?{
+             state.todo = state.todo.map(item=>item.id===todo.id?{
                 ...item,completed: todo.completed
             }:item)
         },
@@ -64,7 +64,7 @@ const todoSlice = createSlice({
                 const update = parsed.filter(item=>item.id!==todo.id)
                 localStorage.setItem("local-todo",JSON.stringify(update))
             }
-            state.todo.filter(item=>item.id!==todo.id)
+            state.todo = state.todo.filter(item=>item.id!==todo.id)
         }
     }
 })
