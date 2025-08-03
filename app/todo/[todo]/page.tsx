@@ -2,9 +2,11 @@
 
 import { RootState } from "@/libs/redux/store";
 import { useParams } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { completeEdit, titleEdit } from "@/libs/redux/slice/todoSlice";
+import { useState } from "react";
 
 export interface Todo {
   userId?: number,
@@ -15,9 +17,28 @@ export interface Todo {
 
 const TodoDetailPage = () => {
   const params = useParams()
+  const dispatch = useDispatch()
   const id = params.todo
   const allTodos = useSelector((state: RootState) => state.todos.todo)
   const todo = allTodos.find(todo => String(todo.id) === String(id))
+  const [edit,setEdit] = useState<string|undefined>(undefined)
+  const [show,setShow] = useState<boolean>(false)
+  const changeStatus = async (todo:Todo)=>{
+      const newTodo:Todo={
+      ...todo,
+      completed: !todo.completed
+      }
+      await dispatch(completeEdit(newTodo))
+  }
+  const handleUpdate = async (todo:Todo,text:string)=>{
+      const newTodo:Todo = {
+          ...todo,
+          title: String(edit)
+      } 
+      await dispatch(titleEdit(newTodo))
+      setEdit(undefined)
+      setShow(false)
+  }
   if (!todo) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -104,20 +125,37 @@ const TodoDetailPage = () => {
                   <div>
                     <h2 className="text-lg font-semibold text-gray-700 mb-2">Description</h2>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-gray-600">
+                      {!show &&<p className="text-gray-600">
                         {todo?.title}
-                      </p>
+                      </p>}
+                        {show &&(
+                            <div className="flex flex-col sm:flex-row gap-2 items-center">
+                                <input
+                                onChange={(e) => setEdit(e.target.value)}
+                                type="text"
+                                className="w-full sm:w-auto flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                placeholder={todo.title}
+                                value={edit}
+                                />
+                                <button
+                                onClick={() => handleUpdate(todo, String(edit))}
+                                className="text-white bg-blue-500 hover:bg-blue-600 text-sm px-4 py-2 rounded-md transition"
+                                >
+                                Confirm
+                                </button>
+                            </div>
+                        )}
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-4 pt-4">
                     <div className="bg-gradient-to-r from-purple-400 to-pink-400 p-0.5 rounded-lg">
-                      <button className="w-full bg-white hover:bg-gray-50 transition-colors rounded-md px-4 py-2 font-medium">
+                      <button onClick={()=>setShow(prev=>!prev)} className="w-full bg-white hover:bg-gray-50 transition-colors rounded-md px-4 py-2 font-medium">
                         Edit Todo
                       </button>
                     </div>
                     <div className="bg-gradient-to-r from-blue-400 to-cyan-400 p-0.5 rounded-lg">
-                      <button className="w-full bg-white hover:bg-gray-50 transition-colors rounded-md px-4 py-2 font-medium">
+                      <button onClick={()=>changeStatus(todo)} className="w-full bg-white hover:bg-gray-50 transition-colors rounded-md px-4 py-2 font-medium">
                         {todo?.completed ? 'Mark as Pending' : 'Mark as Completed'}
                       </button>
                     </div>

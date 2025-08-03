@@ -39,7 +39,7 @@ const MiniLayout = ({children}:{children:ReactNode})=>{
 
 useEffect(()=>{
     if(todos){
-        dispatch(assignTodos(todos))
+       dispatch(assignTodos(todos))
     }
 },[todos])
     return(
